@@ -46,23 +46,19 @@ public_users.post("/register", (req,res) => {
   }
 });
 
-// Fonction qui retourne une promesse pour obtenir tous les livres
-const getAllBooks = () => {
-  return new Promise((resolve, reject) => {
-    try {
-      const booksList = JSON.stringify(books, null, 2);
-      resolve(JSON.parse(booksList));
-    } catch (error) {
-      reject(error);
-    }
+// Fonction pour simuler une requête API avec délai
+const simulateAPICall = (data, delay = 1000) => {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(data), delay);
   });
 };
 
-// Version asynchrone utilisant async/await
+// Task 10: Get the book list available in the shop
 public_users.get('/', async (req, res) => {
   try {
-    const books = await getAllBooks();
-    return res.status(200).json(books);
+    // Simuler un appel API asynchrone
+    const booksList = await simulateAPICall(books);
+    return res.status(200).json(booksList);
   } catch (error) {
     return res.status(500).json({
       message: "Erreur lors de la récupération des livres",
@@ -71,163 +67,84 @@ public_users.get('/', async (req, res) => {
   }
 });
 
-// Version alternative utilisant les promesses directement
-public_users.get('/promise', (req, res) => {
-  getAllBooks()
-    .then(books => {
-      return res.status(200).json(books);
-    })
-    .catch(error => {
-      return res.status(500).json({
-        message: "Erreur lors de la récupération des livres",
-        error: error.message
-      });
-    });
-});
-
-// Fonction qui retourne une promesse pour obtenir un livre par ISBN
-const getBookByISBN = (isbn) => {
-  return new Promise((resolve, reject) => {
-    try {
-      if (books[isbn]) {
-        resolve(books[isbn]);
-      } else {
-        reject(new Error(`Aucun livre trouvé avec l'ISBN ${isbn}`));
-      }
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
-
-// Get book details based on ISBN - Version async/await
+// Task 11: Get book details based on ISBN
 public_users.get('/isbn/:isbn', async (req, res) => {
   try {
     const isbn = req.params.isbn;
-    const book = await getBookByISBN(isbn);
+    // Simuler un appel API asynchrone
+    const book = await simulateAPICall(books[isbn]);
+    
+    if (!book) {
+      return res.status(404).json({
+        message: `Aucun livre trouvé avec l'ISBN ${isbn}`
+      });
+    }
+    
     return res.status(200).json(book);
   } catch (error) {
-    return res.status(404).json({
-      message: error.message
+    return res.status(500).json({
+      message: "Erreur lors de la recherche du livre",
+      error: error.message
     });
   }
 });
 
-// Get book details based on ISBN - Version Promise
-public_users.get('/isbn/promise/:isbn', (req, res) => {
-  const isbn = req.params.isbn;
-  
-  getBookByISBN(isbn)
-    .then(book => {
-      return res.status(200).json(book);
-    })
-    .catch(error => {
-      return res.status(404).json({
-        message: error.message
-      });
-    });
-});
-
-// Fonction qui retourne une promesse pour obtenir les livres par auteur
-const getBooksByAuthor = (author) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const bookIds = Object.keys(books);
-      const authorBooks = bookIds
-        .filter(id => books[id].author.toLowerCase() === author.toLowerCase())
-        .reduce((acc, id) => {
-          acc[id] = books[id];
-          return acc;
-        }, {});
-
-      if (Object.keys(authorBooks).length > 0) {
-        resolve(authorBooks);
-      } else {
-        reject(new Error(`Aucun livre trouvé pour l'auteur "${author}"`));
-      }
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
-
-// Get books by author - Version async/await
+// Task 12: Get book details based on author
 public_users.get('/author/:author', async (req, res) => {
   try {
     const requestedAuthor = req.params.author;
-    const authorBooks = await getBooksByAuthor(requestedAuthor);
+    // Simuler un appel API asynchrone
+    const allBooks = await simulateAPICall(books);
+    
+    const authorBooks = Object.keys(allBooks)
+      .filter(id => allBooks[id].author.toLowerCase() === requestedAuthor.toLowerCase())
+      .reduce((acc, id) => {
+        acc[id] = allBooks[id];
+        return acc;
+      }, {});
+
+    if (Object.keys(authorBooks).length === 0) {
+      return res.status(404).json({
+        message: `Aucun livre trouvé pour l'auteur "${requestedAuthor}"`
+      });
+    }
+
     return res.status(200).json(authorBooks);
   } catch (error) {
-    return res.status(404).json({
-      message: error.message
+    return res.status(500).json({
+      message: "Erreur lors de la recherche des livres",
+      error: error.message
     });
   }
 });
 
-// Get books by author - Version Promise
-public_users.get('/author/promise/:author', (req, res) => {
-  const requestedAuthor = req.params.author;
-  
-  getBooksByAuthor(requestedAuthor)
-    .then(authorBooks => {
-      return res.status(200).json(authorBooks);
-    })
-    .catch(error => {
-      return res.status(404).json({
-        message: error.message
-      });
-    });
-});
-
-// Fonction qui retourne une promesse pour obtenir les livres par titre
-const getBooksByTitle = (title) => {
-  return new Promise((resolve, reject) => {
-    try {
-      const bookIds = Object.keys(books);
-      const titleBooks = bookIds
-        .filter(id => books[id].title.toLowerCase().includes(title.toLowerCase()))
-        .reduce((acc, id) => {
-          acc[id] = books[id];
-          return acc;
-        }, {});
-
-      if (Object.keys(titleBooks).length > 0) {
-        resolve(titleBooks);
-      } else {
-        reject(new Error(`Aucun livre trouvé avec le titre contenant "${title}"`));
-      }
-    } catch (error) {
-      reject(error);
-    }
-  });
-};
-
-// Get books by title - Version async/await
+// Task 13: Get book details based on title
 public_users.get('/title/:title', async (req, res) => {
   try {
     const requestedTitle = req.params.title;
-    const titleBooks = await getBooksByTitle(requestedTitle);
+    // Simuler un appel API asynchrone
+    const allBooks = await simulateAPICall(books);
+    
+    const titleBooks = Object.keys(allBooks)
+      .filter(id => allBooks[id].title.toLowerCase().includes(requestedTitle.toLowerCase()))
+      .reduce((acc, id) => {
+        acc[id] = allBooks[id];
+        return acc;
+      }, {});
+
+    if (Object.keys(titleBooks).length === 0) {
+      return res.status(404).json({
+        message: `Aucun livre trouvé avec le titre contenant "${requestedTitle}"`
+      });
+    }
+
     return res.status(200).json(titleBooks);
   } catch (error) {
-    return res.status(404).json({
-      message: error.message
+    return res.status(500).json({
+      message: "Erreur lors de la recherche des livres",
+      error: error.message
     });
   }
-});
-
-// Get books by title - Version Promise
-public_users.get('/title/promise/:title', (req, res) => {
-  const requestedTitle = req.params.title;
-  
-  getBooksByTitle(requestedTitle)
-    .then(titleBooks => {
-      return res.status(200).json(titleBooks);
-    })
-    .catch(error => {
-      return res.status(404).json({
-        message: error.message
-      });
-    });
 });
 
 //  Get book review
